@@ -249,3 +249,276 @@ button:hover { filter: brightness(1.03); }
     align-items: stretch;
   }
 }
+
+
+/* =====================================
+   STAFF MODULE AND NEW USER FEATURES
+===================================== */
+
+/* Four login tabs */
+.auth-tabs-four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.auth-tabs-four button {
+  padding: 10px 4px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* Request submission form */
+.customer-request-card {
+  margin-top: 22px;
+}
+
+.customer-request-card form {
+  display: grid;
+  gap: 10px;
+}
+
+.customer-request-card label {
+  color: #435572;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.customer-request-card select,
+.customer-request-card textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e1e7f0;
+  border-radius: 9px;
+  outline: none;
+  background: #fbfcfe;
+  color: #172b4e;
+  font: inherit;
+  font-size: 12px;
+}
+
+.customer-request-card select {
+  min-height: 45px;
+}
+
+.customer-request-card textarea {
+  min-height: 105px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.customer-request-card select:focus,
+.customer-request-card textarea:focus {
+  border-color: #5790e5;
+  box-shadow: 0 0 0 3px #2168d315;
+}
+
+/* User request status */
+.request-status {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #fff4df;
+  color: #a66b13;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* Staff dashboard general styling */
+.staff-dashboard,
+.staff-content {
+  width: 100%;
+}
+
+.staff-stats,
+.staff-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 22px 0;
+}
+
+.staff-stat-card {
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid #e8edf5;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 25px #1b376108;
+}
+
+.staff-stat-card span {
+  color: #8490a3;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .8px;
+}
+
+.staff-stat-card strong {
+  color: #1b4e9c;
+  font: 800 clamp(20px, 3vw, 29px) Manrope, sans-serif;
+}
+
+/* Staff section headings and tabs */
+.staff-section,
+.staff-panel {
+  margin-top: 22px;
+  padding: 24px;
+  border: 1px solid #e8edf5;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 25px #1b376108;
+}
+
+.staff-section h2,
+.staff-panel h2 {
+  margin: 0 0 16px;
+  font-family: Manrope, sans-serif;
+  font-size: 19px;
+}
+
+.staff-tabs,
+.staff-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 18px 0;
+}
+
+.staff-tabs button,
+.staff-navigation button {
+  width: auto;
+  padding: 10px 15px;
+  border: 1px solid #dfe6f0;
+  border-radius: 9px;
+  background: #f5f7fb;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.staff-tabs button.active,
+.staff-navigation button.active {
+  border-color: #2168d3;
+  background: #2168d3;
+  color: #fff;
+}
+
+/* Staff search and form fields */
+.staff-section input,
+.staff-panel input,
+.staff-section select,
+.staff-panel select {
+  margin-bottom: 12px;
+}
+
+.staff-section select,
+.staff-panel select {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #e1e7f0;
+  border-radius: 9px;
+  background: #fbfcfe;
+  color: #172b4e;
+  font: inherit;
+  font-size: 12px;
+}
+
+/* Staff tables */
+.staff-table-wrap,
+.staff-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.staff-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+
+.staff-table th {
+  padding: 13px 12px;
+  background: #f5f8fd;
+  color: #64748b;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.staff-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #edf0f5;
+  color: #435572;
+  vertical-align: middle;
+}
+
+.staff-table tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Staff status labels */
+.staff-status,
+.status-badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #eef4ff;
+  color: #2864c4;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* Staff action buttons */
+.staff-action-btn,
+.staff-update-btn {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: #eaf2ff;
+  color: #2168d3;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.staff-action-btn:hover,
+.staff-update-btn:hover {
+  background: #dceaff;
+}
+
+/* Mobile layout */
+@media (max-width: 700px) {
+  .staff-stats,
+  .staff-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-section,
+  .staff-panel {
+    padding: 17px;
+  }
+
+  .staff-tabs button,
+  .staff-navigation button {
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-tabs-four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .auth-tabs-four button {
+    padding: 11px 5px;
+    font-size: 10px;
+  }
+
+  .request-status {
+    font-size: 9px;
+  }
+}

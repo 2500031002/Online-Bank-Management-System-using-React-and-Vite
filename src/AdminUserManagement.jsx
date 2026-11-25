@@ -1,49 +1,27 @@
 
 import { useState } from 'react'
 
-// Read the registered users from this browser's Local Storage.
-function readUsers() {
+function readStaff() {
   try {
-    const savedUsers = JSON.parse(
-      localStorage.getItem('bankUsers') || '[]'
-    )
-
-    if (!Array.isArray(savedUsers)) return []
-
-    const users = [...savedUsers]
-
-    users.forEach((user, index) => {
-      if (!user.accountNumber) {
-        users[index] = {
-          ...user,
-          accountNumber: generateAccountNumber(users),
-        }
-      }
-    })
-
-    localStorage.setItem('bankUsers', JSON.stringify(users))
-    return users
+    return JSON.parse(localStorage.getItem('bankStaff')) || []
   } catch {
     return []
   }
 }
 
-// Generate a unique SecureBank account number.
-function generateAccountNumber(users) {
-  let accountNumber
-
-  do {
-    accountNumber =
-      'SB' + Math.floor(1000000000 + Math.random() * 9000000000)
-  } while (
-    users.some((user) => user.accountNumber === accountNumber)
-  )
-
-  return accountNumber
+function readJSON(key, fallback) {
+  try {
+    return JSON.parse(localStorage.getItem(key)) || fallback
+  } catch {
+    return fallback
+  }
 }
 
 function AdminUserManagement() {
-  const [users, setUsers] = useState(() => readUsers())
+  const [staff, setStaff] = useState(readStaff)
+  const [customers] = useState(() => readJSON('bankUsers', []))
+  const [requests] = useState(() => readJSON('bankRequests', []))
+
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingEmail, setEditingEmail] = useState(null)
@@ -53,13 +31,11 @@ function AdminUserManagement() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  function refreshUsers() {
-    const updatedUsers = readUsers()
-    setUsers(updatedUsers)
-    return updatedUsers
+  const refreshStaff = () => {
+    setStaff(readStaff())
   }
 
-  function resetForm() {
+  const resetForm = () => {
     setName('')
     setEmail('')
     setPassword('')
@@ -67,287 +43,221 @@ function AdminUserManagement() {
     setShowForm(false)
   }
 
-  function handleAddClick() {
+  const handleAdd = () => {
     resetForm()
     setShowForm(true)
     setMessage('')
   }
 
-  // CREATE and UPDATE
-  function handleSaveUser(event) {
-    event.preventDefault()
+  const handleSave = (e) => {
+    e.preventDefault()
     setMessage('')
 
     const cleanName = name.trim()
     const cleanEmail = email.trim().toLowerCase()
 
     if (!cleanName || !cleanEmail) {
-      setMessage('Please enter the name and email.')
-      return
-    }
-
-    const latestUsers = readUsers()
-
-    const duplicateEmail = latestUsers.some(
-      (user) =>
-        user.email.toLowerCase() === cleanEmail &&
-        user.email.toLowerCase() !== editingEmail?.toLowerCase()
-    )
-
-    if (duplicateEmail) {
-      setMessage('This email is already registered.')
+      setMessage('Please enter the staff name and email.')
       return
     }
 
     if (!editingEmail && !password.trim()) {
-      setMessage('Please enter a password for the new user.')
+      setMessage('Please enter a password for the new staff account.')
       return
     }
+
+    const duplicate = staff.some(
+      (person) =>
+        person.email.toLowerCase() === cleanEmail &&
+        person.email !== editingEmail
+    )
+
+    if (duplicate) {
+      setMessage('A staff account with this email already exists.')
+      return
+    }
+
+    const customerEmailExists = readJSON('bankUsers', []).some(
+      (person) => person.email.toLowerCase() === cleanEmail
+    )
+
+    if (customerEmailExists) {
+      setMessage('This email is already registered as a customer.')
+      return
+    }
+
+    let updatedStaff
 
     if (editingEmail) {
-      const oldEmail = editingEmail.toLowerCase()
-
-      const updatedUsers = latestUsers.map((user) => {
-        if (user.email.toLowerCase() !== oldEmail) {
-          return user
-        }
-
-        return {
-          ...user,
-          name: cleanName,
-          email: cleanEmail,
-          password: password.trim() || user.password,
-        }
-      })
-
-      // Move the user's balance and transactions if the email changes.
-      if (oldEmail !== cleanEmail) {
-        const oldBalanceKey = `balance_${editingEmail}`
-        const newBalanceKey = `balance_${cleanEmail}`
-        const oldTransactionsKey = `transactions_${editingEmail}`
-        const newTransactionsKey = `transactions_${cleanEmail}`
-
-        const savedBalance = localStorage.getItem(oldBalanceKey)
-        const savedTransactions = localStorage.getItem(
-          oldTransactionsKey
-        )
-
-        if (savedBalance !== null) {
-          localStorage.setItem(newBalanceKey, savedBalance)
-          localStorage.removeItem(oldBalanceKey)
-        }
-
-        if (savedTransactions !== null) {
-          localStorage.setItem(
-            newTransactionsKey,
-            savedTransactions
-          )
-          localStorage.removeItem(oldTransactionsKey)
-        }
+      updatedStaff = staff.map((person) =>
+        person.email === editingEmail
+          ? {
+              ...person,
+              name: cleanName,
+              email: cleanEmail,
+              ...(password.trim() ? { password } : {}),
+            }
+          : person
+      )
+    } else {
+      const newStaff = {
+        id: `ST${Date.now()}`,
+        name: cleanName,
+        email: cleanEmail,
+        password,
+        role: 'Staff',
       }
 
-      localStorage.setItem(
-        'bankUsers',
-        JSON.stringify(updatedUsers)
-      )
-
-      setUsers(updatedUsers)
-      resetForm()
-      setMessage('User details updated successfully.')
-      return
+      updatedStaff = [...staff, newStaff]
     }
 
-    // CREATE a new user.
-    const newUser = {
-      name: cleanName,
-      email: cleanEmail,
-      password: password.trim(),
-      accountNumber: generateAccountNumber(latestUsers),
-    }
-
-    const updatedUsers = [...latestUsers, newUser]
-
-    localStorage.setItem(
-      'bankUsers',
-      JSON.stringify(updatedUsers)
+    localStorage.setItem('bankStaff', JSON.stringify(updatedStaff))
+    setStaff(updatedStaff)
+    setMessage(
+      editingEmail
+        ? 'Staff account updated successfully.'
+        : 'Staff account created successfully.'
     )
-
-    // New demo accounts start with the same default balance
-    // used by the existing project.
-    localStorage.setItem(`balance_${cleanEmail}`, '10000')
-    localStorage.setItem(
-      `transactions_${cleanEmail}`,
-      JSON.stringify([])
-    )
-
-    setUsers(updatedUsers)
     resetForm()
-    setMessage('New user account created successfully.')
   }
 
-  // Load a user into the form for UPDATE.
-  function handleEditUser(user) {
-    setEditingEmail(user.email)
-    setName(user.name)
-    setEmail(user.email)
+  const handleEdit = (person) => {
+    setName(person.name)
+    setEmail(person.email)
     setPassword('')
+    setEditingEmail(person.email)
     setShowForm(true)
     setMessage('')
   }
 
-  // DELETE
-  function handleDeleteUser(user) {
+  const handleDelete = (person) => {
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${user.name}'s account?`
+      `Delete the staff account for ${person.name}?`
     )
 
     if (!confirmed) return
 
-    const updatedUsers = readUsers().filter(
-      (item) => item.email.toLowerCase() !== user.email.toLowerCase()
+    const updatedStaff = staff.filter(
+      (item) => item.email !== person.email
     )
 
-    localStorage.setItem(
-      'bankUsers',
-      JSON.stringify(updatedUsers)
-    )
-
-    localStorage.removeItem(`balance_${user.email}`)
-    localStorage.removeItem(`transactions_${user.email}`)
-
-    setUsers(updatedUsers)
-    setMessage('User account deleted.')
+    localStorage.setItem('bankStaff', JSON.stringify(updatedStaff))
+    setStaff(updatedStaff)
+    setMessage('Staff account deleted successfully.')
   }
 
-  // READ / SEARCH
-  const filteredUsers = users.filter((user) => {
-    const searchText = search.toLowerCase()
+  const filteredStaff = staff.filter((person) =>
+    `${person.name} ${person.email}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  )
 
-    return (
-      user.name.toLowerCase().includes(searchText) ||
-      user.email.toLowerCase().includes(searchText) ||
-      user.accountNumber.toLowerCase().includes(searchText)
-    )
-  })
-
-  const totalBalance = users.reduce((total, user) => {
+  const totalBalance = customers.reduce((total, customer) => {
     return (
       total +
-      Number(localStorage.getItem(`balance_${user.email}`) || 10000)
+      Number(localStorage.getItem(`balance_${customer.email}`) || 10000)
     )
   }, 0)
 
-  const totalTransactions = users.reduce((total, user) => {
-    try {
-      const transactions = JSON.parse(
-        localStorage.getItem(`transactions_${user.email}`) || '[]'
-      )
-
-      return total + transactions.length
-    } catch {
-      return total
-    }
+  const totalTransactions = customers.reduce((total, customer) => {
+    return (
+      total +
+      readJSON(`transactions_${customer.email}`, []).length
+    )
   }, 0)
 
+  const pendingRequests = requests.filter(
+    (request) => !request.status || request.status === 'Pending'
+  ).length
+
   return (
-    <div>
-      <section className="admin-stats">
+    <>
+      <div className="admin-stats">
         <div className="admin-stat-card">
-          <span>REGISTERED USERS</span>
-          <strong>{users.length}</strong>
+          <span>TOTAL STAFF</span>
+          <strong>{staff.length}</strong>
+        </div>
+
+        <div className="admin-stat-card">
+          <span>TOTAL CUSTOMERS</span>
+          <strong>{customers.length}</strong>
+        </div>
+
+        <div className="admin-stat-card">
+          <span>PENDING REQUESTS</span>
+          <strong>{pendingRequests}</strong>
         </div>
 
         <div className="admin-stat-card">
           <span>TOTAL DEMO BALANCE</span>
           <strong>
-            ₹{totalBalance.toLocaleString('en-IN', {
-              maximumFractionDigits: 2,
-            })}
+            ₹{totalBalance.toLocaleString('en-IN')}
           </strong>
         </div>
 
         <div className="admin-stat-card">
-          <span>RECORDED TRANSACTIONS</span>
+          <span>TOTAL TRANSACTIONS</span>
           <strong>{totalTransactions}</strong>
         </div>
-      </section>
+      </div>
 
       <section className="history-section admin-users-section">
         <div className="admin-crud-heading">
           <div>
-            <h2>Manage User Accounts</h2>
-            <p>Create, view, edit, and delete demo users.</p>
+            <h2>Staff Management</h2>
+            <p>Create, update and manage SecureBank staff accounts.</p>
           </div>
 
-          <button
-            type="button"
-            className="admin-add-btn"
-            onClick={handleAddClick}
-          >
-            + Add New User
+          <button className="admin-add-btn" onClick={handleAdd}>
+            + Add Staff
           </button>
         </div>
-
-        <input
-          className="admin-search"
-          type="text"
-          placeholder="Search name, email, or account number..."
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
 
         {message && (
           <div className="dashboard-message">{message}</div>
         )}
 
         {showForm && (
-          <form className="admin-user-form" onSubmit={handleSaveUser}>
-            <h3>{editingEmail ? 'Edit User' : 'Create New User'}</h3>
+          <form className="admin-user-form" onSubmit={handleSave}>
+            <h3>
+              {editingEmail ? 'Edit Staff Account' : 'Create Staff Account'}
+            </h3>
 
-            <label htmlFor="admin-user-name">Full Name</label>
+            <label>Full Name</label>
             <input
-              id="admin-user-name"
               type="text"
+              placeholder="Enter staff name"
               value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Enter full name"
+              onChange={(e) => setName(e.target.value)}
               required
             />
 
-            <label htmlFor="admin-user-email">Email Address</label>
+            <label>Email Address</label>
             <input
-              id="admin-user-email"
               type="email"
+              placeholder="Enter staff email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="Enter email address"
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
 
-            <label htmlFor="admin-user-password">
+            <label>
               {editingEmail
-                ? 'New Password (optional)'
+                ? 'New Password (leave blank to keep current password)'
                 : 'Password'}
             </label>
+
             <input
-              id="admin-user-password"
               type="password"
+              placeholder="Enter staff password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder={
-                editingEmail
-                  ? 'Leave blank to keep current password'
-                  : 'Enter password'
-              }
+              onChange={(e) => setPassword(e.target.value)}
               required={!editingEmail}
             />
 
             <div className="admin-form-actions">
-              <button
-                type="submit"
-                className="admin-save-btn"
-              >
-                {editingEmail ? 'Save Changes' : 'Create User'}
+              <button type="submit" className="admin-save-btn">
+                {editingEmail ? 'Update Staff' : 'Create Staff'}
               </button>
 
               <button
@@ -361,95 +271,110 @@ function AdminUserManagement() {
           </form>
         )}
 
-        {filteredUsers.length === 0 ? (
-          <p className="empty-history">
-            No matching users found.
-          </p>
-        ) : (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Full Name</th>
-                  <th>Email</th>
-                  <th>Account Number</th>
-                  <th>Balance</th>
-                  <th>Transactions</th>
-                  <th>Actions</th>
+        <input
+          className="admin-search"
+          type="text"
+          placeholder="Search staff by name or email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Staff ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {filteredStaff.map((person) => (
+                <tr key={person.email}>
+                  <td>{person.id}</td>
+                  <td>{person.name}</td>
+                  <td>{person.email}</td>
+                  <td>{person.role || 'Staff'}</td>
+                  <td>
+                    <div className="admin-row-actions">
+                      <button
+                        className="admin-edit-btn"
+                        onClick={() => handleEdit(person)}
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        className="admin-delete-btn"
+                        onClick={() => handleDelete(person)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
+              ))}
 
-              <tbody>
-                {filteredUsers.map((user) => {
-                  const userBalance = Number(
-                    localStorage.getItem(
-                      `balance_${user.email}`
-                    ) || 10000
-                  )
-
-                  let userTransactions = []
-
-                  try {
-                    userTransactions = JSON.parse(
-                      localStorage.getItem(
-                        `transactions_${user.email}`
-                      ) || '[]'
-                    )
-                  } catch {
-                    userTransactions = []
-                  }
-
-                  return (
-                    <tr key={user.email}>
-                      <td>{user.name}</td>
-                      <td>{user.email}</td>
-                      <td>{user.accountNumber}</td>
-                      <td>
-                        ₹{userBalance.toLocaleString('en-IN')}
-                      </td>
-                      <td>{userTransactions.length}</td>
-                      <td>
-                        <div className="admin-row-actions">
-                          <button
-                            type="button"
-                            className="admin-edit-btn"
-                            onClick={() => handleEditUser(user)}
-                          >
-                            Edit
-                          </button>
-
-                          <button
-                            type="button"
-                            className="admin-delete-btn"
-                            onClick={() => handleDeleteUser(user)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        <button
-          type="button"
-          className="admin-cancel-btn"
-          onClick={refreshUsers}
-          style={{ marginTop: '14px' }}
-        >
-          Refresh User List
-        </button>
-
-        <p className="demo-notice">
-          Educational demo only. User data is stored in this
-          browser's Local Storage.
-        </p>
+              {filteredStaff.length === 0 && (
+                <tr>
+                  <td colSpan="5">No staff accounts found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
-    </div>
+
+      <section className="history-section admin-users-section">
+        <div className="admin-crud-heading">
+          <div>
+            <h2>Registered Customers</h2>
+            <p>View customer accounts and overall banking activity.</p>
+          </div>
+        </div>
+
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Account Number</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {customers.map((customer) => {
+                const customerBalance = Number(
+                  localStorage.getItem(`balance_${customer.email}`) || 10000
+                )
+
+                return (
+                  <tr key={customer.email}>
+                    <td>{customer.name}</td>
+                    <td>{customer.email}</td>
+                    <td>{customer.accountNumber || 'N/A'}</td>
+                    <td>
+                      ₹{customerBalance.toLocaleString('en-IN')}
+                    </td>
+                  </tr>
+                )
+              })}
+
+              {customers.length === 0 && (
+                <tr>
+                  <td colSpan="4">No registered customers found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
   )
 }
 
