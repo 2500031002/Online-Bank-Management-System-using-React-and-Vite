@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './App.css'
+import AdminUserManagement from './AdminUserManagement'
 
 // Generate an account number that is not already assigned to another user.
 function generateAccountNumber(users) {
@@ -347,44 +348,42 @@ function App() {
     setIsLogin(true)
   }
 
-  if (adminLoggedIn) {
-    const adminUsers = ensureAccountNumbers(readJSON('bankUsers', []))
-    const adminSummary = adminUsers.reduce((summary, user) => {
-      summary.totalBalance += Number(localStorage.getItem(`balance_${user.email}`) || 10000)
-      summary.totalTransactions += readJSON(`transactions_${user.email}`, []).length
-      return summary
-    }, { totalBalance: 0, totalTransactions: 0 })
+  
+if (adminLoggedIn) {
+  return (
+    <div className="bank-app">
+      <header className="navbar">
+        <div className="brand">
+          <span className="brand-icon">✦</span>
+          SecureBank
+          <span className="admin-nav-label">ADMIN</span>
+        </div>
 
-    return (
-      <div className="bank-app">
-        <header className="navbar">
-          <div className="brand"><span className="brand-icon">✦</span>SecureBank <span className="admin-nav-label">ADMIN</span></div>
-          <button className="logout-btn" onClick={() => setAdminLoggedIn(false)}>Logout ↗</button>
-        </header>
-        <main className="dashboard admin-dashboard">
-          <div className="dashboard-heading"><div><span className="eyebrow">ADMINISTRATION</span><h1>Admin Dashboard</h1><p>Overview of registered SecureBank demo accounts.</p></div><div className="user-avatar admin-avatar">A</div></div>
-          <section className="admin-stats">
-            <div className="admin-stat-card"><span>REGISTERED USERS</span><strong>{adminUsers.length}</strong></div>
-            <div className="admin-stat-card"><span>TOTAL DEMO BALANCE</span><strong>₹{adminSummary.totalBalance.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</strong></div>
-            <div className="admin-stat-card"><span>RECORDED TRANSACTIONS</span><strong>{adminSummary.totalTransactions}</strong></div>
-          </section>
-          <section className="history-section admin-users-section">
-            <h2>Registered User Accounts</h2>
-            {adminUsers.length === 0 ? <p className="empty-history">No users have registered yet.</p> : (
-              <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Full Name</th><th>Email</th><th>Account Number</th><th>Balance</th><th>Transactions</th></tr></thead><tbody>
-                {adminUsers.map((user) => {
-                  const userBalance = Number(localStorage.getItem(`balance_${user.email}`) || 10000)
-                  const userTransactions = readJSON(`transactions_${user.email}`, [])
-                  return <tr key={user.email}><td>{user.name}</td><td>{user.email}</td><td>{user.accountNumber}</td><td>₹{userBalance.toLocaleString('en-IN')}</td><td>{userTransactions.length}</td></tr>
-                })}
-              </tbody></table></div>
-            )}
-          </section>
-          <p className="demo-notice">Admin view for educational demonstration only. Data is stored in this browser's Local Storage.</p>
-        </main>
-      </div>
-    )
-  }
+        <button
+          className="logout-btn"
+          onClick={() => setAdminLoggedIn(false)}
+        >
+          Logout ↗
+        </button>
+      </header>
+
+      <main className="dashboard admin-dashboard">
+        <div className="dashboard-heading">
+          <div>
+            <span className="eyebrow">ADMINISTRATION</span>
+            <h1>Admin Dashboard</h1>
+            <p>Manage registered SecureBank demo accounts.</p>
+          </div>
+
+          <div className="user-avatar admin-avatar">A</div>
+        </div>
+
+        <AdminUserManagement />
+      </main>
+    </div>
+  )
+}
+
 
   if (currentUser) {
     return (
